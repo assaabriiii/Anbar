@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 from rich.console import Console
+from rich.markup import escape
 
 console = Console()
 err_console = Console(stderr=True)
 
 
 def warn(message: str) -> None:
-    err_console.print(f"[yellow]warning:[/yellow] {message}")
+    err_console.print(f"[yellow]warning:[/yellow] {escape(message)}")
 
 
 def info(message: str) -> None:

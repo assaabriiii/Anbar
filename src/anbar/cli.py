@@ -10,6 +10,7 @@ from typing import List, Optional
 import typer
 from rich.progress import BarColumn, MofNCompleteColumn, SpinnerColumn, TextColumn, TimeElapsedColumn
 from rich.progress import Progress as RProgress
+from rich.markup import escape
 from rich.table import Table
 
 from anbar import __version__
@@ -146,7 +147,7 @@ def scan(
     for plugin, plan in plans:
         console.rule(f"[bold]{plugin.title}")
         for manifest in plan.manifests:
-            console.print(f"  [dim]manifest[/dim] {_rel(manifest, project)}")
+            console.print(f"  [dim]manifest[/dim] {escape(_rel(manifest, project))}")
         for message in plan.warnings:
             warn(message)
         table = Table(show_header=True, header_style="bold", box=None, pad_edge=False)
@@ -157,7 +158,7 @@ def scan(
         shown = plan.items if show_all else plan.items[:25]
         for item in shown:
             size = human_size(item.size) if item.size is not None else "[dim]?[/dim]"
-            table.add_row(item.name, item.version or "", item.source, size)
+            table.add_row(escape(item.name), escape(item.version or ""), escape(item.source), size)
         if plan.items:
             console.print(table)
         if len(shown) < len(plan.items):
@@ -269,9 +270,9 @@ def pack(
                 result = plugin.fetch(plan, kit, ctx)
             except AnbarError as exc:
                 ctx.progress.finish()
-                err_console.print(f"[red]{plugin.title} failed:[/red] {exc.message}")
+                err_console.print(f"[red]{plugin.title} failed:[/red] {escape(exc.message)}")
                 if exc.hint:
-                    err_console.print(f"[cyan]hint:[/cyan] {exc.hint}")
+                    err_console.print(f"[cyan]hint:[/cyan] {escape(exc.hint)}")
                 failures.append(f"{plugin.title}: {exc.message}")
                 summary.add_row(plugin.title, "-", "-", "all")
                 continue
@@ -280,7 +281,7 @@ def pack(
             for message in result.warnings:
                 warn(message)
             for item in result.failed:
-                err_console.print(f"[red]failed:[/red] {item}")
+                err_console.print(f"[red]failed:[/red] {escape(item)}")
             failures += [f"{plugin.title}: {f}" for f in result.failed]
             summary.add_row(plugin.title, str(result.downloaded), str(result.skipped), str(len(result.failed)))
     finally:
@@ -343,6 +344,8 @@ def serve(
             if not plugin.has_content(kit):
                 continue
             for service in plugin.serve(kit, config, bind, ports):
+                if any(service is s for s in services):
+                    continue  # shared file server, already running
                 service.start()
                 services.append(service)
         if not services:
@@ -475,9 +478,9 @@ def main() -> None:
     try:
         app()
     except AnbarError as exc:
-        err_console.print(f"[red]error:[/red] {exc.message}")
+        err_console.print(f"[red]error:[/red] {escape(exc.message)}")
         if exc.hint:
-            err_console.print(f"[cyan]hint:[/cyan] {exc.hint}")
+            err_console.print(f"[cyan]hint:[/cyan] {escape(exc.hint)}")
         sys.exit(1)
     except KeyboardInterrupt:
         err_console.print("[yellow]interrupted[/yellow] (partial downloads are kept and will resume)")
