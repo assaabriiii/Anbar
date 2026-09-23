@@ -1,0 +1,3 @@
+ARG BASE_TAG
+FROM busybox:${BASE_TAG}
+FROM alpine

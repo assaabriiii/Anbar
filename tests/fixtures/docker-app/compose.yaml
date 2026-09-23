@@ -1,0 +1,14 @@
+services:
+  app:
+    build: .
+    image: myorg/app:dev
+  worker:
+    build:
+      context: ./worker
+      dockerfile: Dockerfile.worker
+  db:
+    image: postgres:${POSTGRES_VERSION:-16}
+  cache:
+    image: "redis:${REDIS_TAG}"
+  queue:
+    image: rabbitmq@sha256:0000000000000000000000000000000000000000000000000000000000000000
