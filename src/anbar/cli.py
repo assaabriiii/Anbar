@@ -8,7 +8,16 @@ from pathlib import Path
 from typing import List, Optional
 
 import typer
-from rich.progress import BarColumn, MofNCompleteColumn, SpinnerColumn, TextColumn, TimeElapsedColumn
+from rich.progress import (
+    BarColumn,
+    DownloadColumn,
+    MofNCompleteColumn,
+    SpinnerColumn,
+    TextColumn,
+    TimeElapsedColumn,
+    TimeRemainingColumn,
+    TransferSpeedColumn,
+)
 from rich.progress import Progress as RProgress
 from rich.markup import escape
 from rich.table import Table
@@ -18,7 +27,8 @@ from anbar.config import Config, load_config
 from anbar.console import console, err_console, human_size, warn
 from anbar.errors import AnbarError
 from anbar.backup import Changes, load_state, restore_files
-from anbar.kit import Kit
+from anbar.kit import FORMAT_VERSION, Kit
+from anbar.kitops import export_kit, import_kit, kit_status, verify_kit
 from anbar.network import Network
 from anbar.plugins import all_plugins, select_plugins
 from anbar.plugins.base import Context, Plan, Plugin, Progress, UseContext
@@ -472,6 +482,148 @@ def env_cmd(
             print(f'set "{key}={value}"')
         else:
             print(f"export {key}='{value}'")
+
+
+# ---------------------------------------------------------------------------
+# verify / status / export / import
+# ---------------------------------------------------------------------------
+
+
+def _byte_progress(description: str, total: int) -> RProgress:
+    bar = RProgress(
+        TextColumn("[bold]{task.description}"),
+        BarColumn(),
+        DownloadColumn(),
+        TransferSpeedColumn(),
+        TimeRemainingColumn(),
+        console=console,
+        transient=True,
+    )
+    bar.add_task(description, total=total)
+    return bar
+
+
+@app.command()
+def verify(
+    kit_dir: Path = typer.Argument(..., help="Kit directory."),
+    quick: bool = typer.Option(False, "--quick", help="Only compare file sizes (no hashing)."),
+) -> None:
+    """Check every file in the kit against the sha256 and size in its manifest."""
+    kit = Kit.open(kit_dir)
+    total = sum(a.size for a in kit.artifacts.values())
+    with _byte_progress("Verifying", total) as bar:
+        report = verify_kit(kit, quick=quick, on_bytes=lambda n: bar.advance(bar.task_ids[0], n))
+    for path in report.missing:
+        err_console.print(f"[red]missing[/red]   {escape(path)}")
+    for path in report.corrupt:
+        err_console.print(f"[red]corrupt[/red]   {escape(path)}")
+    for path in report.partial:
+        warn(f"partial download (finish it with `anbar pack`): {path}")
+    if report.untracked:
+        warn(f"{len(report.untracked)} file(s) are not in the manifest, e.g. {report.untracked[0]}")
+    checked = "sizes" if quick else "sha256"
+    if report.healthy:
+        console.print(f"[green]OK[/green]: {report.ok} files, {human_size(total)} ({checked} verified)")
+        return
+    err_console.print(
+        f"[red]{len(report.missing)} missing, {len(report.corrupt)} corrupt[/red] of {len(kit.artifacts)} files"
+    )
+    err_console.print("[cyan]hint:[/cyan] run `anbar pack` again with internet to repair the kit, "
+                      "or copy it again from its source")
+    raise typer.Exit(1)
+
+
+def _age(days: Optional[float]) -> str:
+    if days is None:
+        return "?"
+    if days < 1:
+        return "today"
+    if days < 2:
+        return "1 day"
+    return f"{int(days)} days"
+
+
+@app.command()
+def status(
+    kit_dir: Path = typer.Argument(..., help="Kit directory."),
+    stale_days: int = typer.Option(30, "--stale-days", help="Mark ecosystems older than this as stale."),
+) -> None:
+    """Show kit contents, sizes and freshness per ecosystem."""
+    kit = Kit.open(kit_dir)
+    console.print(f"[bold]Kit[/bold] {kit.root}")
+    console.print(f"  format v{FORMAT_VERSION}, written by anbar {kit.anbar_version}; "
+                  f"created {kit.created_at}, updated {kit.updated_at}")
+    if kit.projects:
+        console.print(f"  projects: {', '.join(kit.projects)}")
+    rows = kit_status(kit)
+    if not rows:
+        console.print("[yellow]The kit is empty.[/yellow] Fill it with `anbar pack PROJECT --out " + str(kit_dir) + "`.")
+        return
+    table = Table()
+    table.add_column("Ecosystem")
+    table.add_column("Files", justify="right")
+    table.add_column("Size", justify="right")
+    table.add_column("Last download")
+    table.add_column("Age")
+    table.add_column("Contents")
+    for row in rows:
+        days = row.age_days()
+        age = _age(days)
+        if days is not None and days > stale_days:
+            age = f"[yellow]{age} (stale)[/yellow]"
+        details = row.details[:4]
+        more = f" +{len(row.details) - 4} more" if len(row.details) > 4 else ""
+        table.add_row(row.name, str(row.files), human_size(row.size), (row.newest or "?")[:10], age,
+                      escape(", ".join(details) + more))
+    console.print(table)
+    console.print(f"Total: [bold]{human_size(sum(r.size for r in rows))}[/bold] in {sum(r.files for r in rows)} files")
+
+
+@app.command("export")
+def export_cmd(
+    kit_dir: Path = typer.Argument(..., help="Kit directory."),
+    to: Path = typer.Option(..., "--to", help="Archive to write: .tar (fastest), .tar.gz or .tar.xz."),
+    skip_verify: bool = typer.Option(False, "--skip-verify", help="Do not check file sizes before exporting."),
+) -> None:
+    """Pack a kit into a single archive for a USB drive or a LAN copy."""
+    kit = Kit.open(kit_dir)
+    if not skip_verify:
+        report = verify_kit(kit, quick=True)
+        if not report.healthy:
+            raise AnbarError(f"the kit has {len(report.missing)} missing and {len(report.corrupt)} damaged files",
+                             f"run `anbar verify {kit_dir}` for details, or pass --skip-verify")
+    total = sum(a.size for a in kit.artifacts.values())
+    with _byte_progress("Exporting", total) as bar:
+        digest = export_kit(kit, to, on_file=lambda _rel, size: bar.advance(bar.task_ids[0], size))
+    size = to.stat().st_size
+    console.print(f"[green]Wrote[/green] {to} ({human_size(size)})")
+    console.print(f"  sha256 {digest}  (also in {to.name}.sha256; copy both files)")
+    console.print(f"On the other machine: [bold]anbar import {to.name}[/bold]")
+
+
+@app.command("import")
+def import_cmd(
+    archive: Path = typer.Argument(..., help="Archive created by `anbar export`."),
+    to: Optional[Path] = typer.Option(None, "--to", help="Kit directory (default: the kit's name in the current directory). An existing kit is updated in place."),
+    no_check: bool = typer.Option(False, "--no-check", help="Skip the .sha256 sidecar check."),
+) -> None:
+    """Unpack an exported kit (or merge it into an existing kit) and verify it."""
+    with console.status("Importing..."):
+        result = import_kit(archive, to, check_sidecar=not no_check)
+        report = verify_kit(result.kit, quick=True)
+    try:
+        from anbar.plugins.docs import ensure_extracted
+
+        ensure_extracted(result.kit)
+    except AnbarError as exc:
+        warn(f"docs: {exc}")
+    action = "Merged into" if result.merged else "Imported"
+    console.print(f"[green]{action}[/green] {result.kit.root}: {result.added} new file(s), "
+                  f"{len(result.kit.artifacts)} total")
+    if not report.healthy:
+        raise AnbarError(f"{len(report.missing) + len(report.corrupt)} file(s) are missing or damaged",
+                         f"run `anbar verify {result.kit.root}`")
+    console.print(f"Next: [bold]anbar serve {result.kit.root}[/bold] and [bold]anbar use {result.kit.root}[/bold]")
 
 
 def main() -> None:

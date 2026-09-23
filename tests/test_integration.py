@@ -33,9 +33,8 @@ def test_django_app_offline(fixtures, tmp_path):
     kit_dir = tmp_path / "kit"
     result = runner.invoke(app, ["pack", str(project), "--out", str(kit_dir), "--only", "python"])
     assert result.exit_code == 0, result.output
-    verify = runner.invoke(app, ["verify", str(kit_dir)]) if "verify" in [c.name for c in app.registered_commands] else None
-    if verify is not None:
-        assert verify.exit_code == 0, verify.output
+    verify = runner.invoke(app, ["verify", str(kit_dir)])
+    assert verify.exit_code == 0, verify.output
 
     kit = Kit.open(kit_dir)
     [service] = PythonPlugin().serve(kit, Config(), "127.0.0.1", {"pypi": 0})
