@@ -1,0 +1,8 @@
+lockfileVersion: 5.4
+packages:
+  /@babel/core/7.24.0:
+    resolution: {integrity: sha512-aaa}
+  /styled/6.0.0_react@18.3.1:
+    resolution: {integrity: sha512-ccc}
+  /custom/1.0.0:
+    resolution: {tarball: https://example.com/custom-1.0.0.tgz}

@@ -46,3 +46,56 @@ def fake_pypi(tmp_path: Path, wheels: list[tuple[str, str, list[str]]]) -> HTTPS
     service = HTTPService("upstream", handler, "127.0.0.1", 0)
     service.start()
     return service
+
+
+def make_npm_tarball(directory: Path, name: str, version: str, dependencies: dict | None = None) -> Path:
+    """Write an npm package tarball (package/ prefix, like `npm pack`)."""
+    import io
+    import json
+    import tarfile
+
+    directory.mkdir(parents=True, exist_ok=True)
+    path = directory / f"{name.split('/')[-1]}-{version}.tgz"
+    files = {
+        "package/package.json": json.dumps(
+            {"name": name, "version": version, "main": "index.js", "dependencies": dependencies or {}}
+        ),
+        "package/index.js": f"module.exports = {json.dumps(name + '@' + version)};\n",
+    }
+    with tarfile.open(path, "w:gz") as tf:
+        for fname, content in files.items():
+            data = content.encode()
+            info = tarfile.TarInfo(fname)
+            info.size = len(data)
+            info.mode = 0o644
+            tf.addfile(info, io.BytesIO(data))
+    return path
+
+
+def fake_npm_registry(tmp_path: Path, packages: list[tuple[str, str, dict]]) -> HTTPService:
+    """Start an upstream npm registry serving the given (name, version, dependencies)."""
+    import json
+
+    from anbar.network import verify_integrity  # noqa: F401 - keeps helpers self-contained
+    from anbar.plugins.node.registry import NpmRegistryHandler
+
+    root = tmp_path / "upstream-npm"
+    docs: dict[str, dict] = {}
+    for name, version, deps in packages:
+        tgz = make_npm_tarball(root / "tarballs" / name / "-", name, version, deps)
+        integrity = "sha512-" + base64.b64encode(hashlib.sha512(tgz.read_bytes()).digest()).decode()
+        doc = docs.setdefault(name, {"name": name, "dist-tags": {}, "versions": {}})
+        doc["versions"][version] = {
+            "name": name,
+            "version": version,
+            "dependencies": deps,
+            "dist": {"tarball": f"https://registry.npmjs.org/{name}/-/{tgz.name}", "integrity": integrity},
+        }
+        doc["dist-tags"]["latest"] = version
+    for name, doc in docs.items():
+        path = root / "packuments" / f"{name}.json"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(doc))
+    service = HTTPService("upstream npm", make_handler(NpmRegistryHandler, root=root), "127.0.0.1", 0)
+    service.start()
+    return service

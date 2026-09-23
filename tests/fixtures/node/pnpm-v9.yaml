@@ -1,0 +1,18 @@
+lockfileVersion: '9.0'
+
+importers:
+  .:
+    dependencies:
+      react:
+        specifier: ^18
+        version: 18.3.1
+
+packages:
+  '@babel/core@7.24.0':
+    resolution: {integrity: sha512-aaa}
+  react@18.3.1:
+    resolution: {integrity: sha512-bbb}
+  local-thing@file:../x:
+    resolution: {directory: ../x, type: directory}
+  styled@6.0.0(react@18.3.1):
+    resolution: {integrity: sha512-ccc}

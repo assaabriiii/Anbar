@@ -1,0 +1,17 @@
+{
+  "name": "modern",
+  "lockfileVersion": 3,
+  "packages": {
+    "": {"name": "modern", "dependencies": {"@babel/code-frame": "^7"}},
+    "node_modules/@babel/code-frame": {
+      "version": "7.24.2",
+      "resolved": "https://registry.npmjs.org/@babel/code-frame/-/code-frame-7.24.2.tgz",
+      "integrity": "sha512-y5+tLQyV8pg3fsiln67BVLD1P13Eg4lh5RW9mF0zUuvLrv9uIQ4MCL+CRT+FTsBlBjcIan6PGsLcBN0m3ClUyQ=="
+    },
+    "node_modules/a/node_modules/b": {"version": "2.0.0", "resolved": "https://registry.npmjs.org/b/-/b-2.0.0.tgz"},
+    "node_modules/my-alias": {"name": "real-pkg", "version": "1.0.0", "resolved": "https://registry.npmjs.org/real-pkg/-/real-pkg-1.0.0.tgz"},
+    "node_modules/workspace-pkg": {"resolved": "packages/workspace-pkg", "link": true},
+    "packages/workspace-pkg": {"version": "0.0.1"},
+    "node_modules/gitdep": {"version": "1.0.0", "resolved": "git+ssh://git@github.com/x/y.git#abc"}
+  }
+}
