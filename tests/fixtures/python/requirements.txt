@@ -1,0 +1,12 @@
+# main requirements
+-r requirements-base.txt
+-c constraints.txt
+Django>=4.2,<5  # web framework
+requests[socks]==2.32.3 \
+    --hash=sha256:abc
+pywin32==306 ; sys_platform == "win32"
+-e .
+./local/pkg
+git+https://github.com/example/repo.git#egg=repo
+--index-url https://example.com/simple
+mypkg @ https://example.com/mypkg-1.0.tar.gz

@@ -79,6 +79,7 @@ class Plan:
     manifests: list[Path] = field(default_factory=list)
     items: list[PlanItem] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
+    data: dict[str, Any] = field(default_factory=dict)
 
     @property
     def estimated_size(self) -> int:

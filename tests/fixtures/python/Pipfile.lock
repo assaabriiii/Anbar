@@ -1,0 +1,10 @@
+{
+  "_meta": {"hash": {"sha256": "x"}},
+  "default": {
+    "idna": {"hashes": ["sha256:x"], "version": "==3.6"},
+    "local": {"editable": true, "path": "."}
+  },
+  "develop": {
+    "pytest": {"version": "==8.0.0"}
+  }
+}
