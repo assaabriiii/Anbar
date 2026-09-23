@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anbar — offline development kits</title>
+<meta name="description" content="Download every dependency your project needs while the internet works, and keep installing, building and running it when it doesn't. PyPI, npm, Docker, Hugging Face and docs, served as local mirrors.">
+<meta property="og:title" content="Anbar — offline development kits">
+<meta property="og:description" content="Pre-download PyPI, npm, Docker, Hugging Face and docs dependencies, then serve them as local mirrors during internet shutdowns.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230f766e'/%3E%3Cpath d='M7 14 16 8l9 6v10H7z' fill='none' stroke='white' stroke-width='2.4' stroke-linejoin='round'/%3E%3Cpath d='M12 24v-6h8v6' fill='none' stroke='white' stroke-width='2.4'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Vazirmatn:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f7f8f7;
+    --bg-soft: #eef2f0;
+    --surface: #ffffff;
+    --text: #13201d;
+    --muted: #55655f;
+    --border: #dbe3df;
+    --accent: #0f766e;
+    --accent-strong: #0b5c56;
+    --accent-soft: #d7efec;
+    --code-bg: #0f1a18;
+    --code-text: #d9f2ec;
+    --code-dim: #7d9690;
+    --code-accent: #5eead4;
+    --shadow: 0 1px 2px rgba(16, 24, 22, .06), 0 8px 24px rgba(16, 24, 22, .06);
+    --radius: 14px;
+    --font: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0c1312; --bg-soft: #111b19; --surface: #152220; --text: #e6f0ed; --muted: #97aaa4;
+      --border: #24342f; --accent: #2dd4bf; --accent-strong: #5eead4; --accent-soft: #123a35;
+      --code-bg: #08100f; --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .25);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0c1312; --bg-soft: #111b19; --surface: #152220; --text: #e6f0ed; --muted: #97aaa4;
+    --border: #24342f; --accent: #2dd4bf; --accent-strong: #5eead4; --accent-soft: #123a35;
+    --code-bg: #08100f; --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .25);
+  }
+  html[lang="fa"] { --font: "Vazirmatn", "Inter", system-ui, sans-serif; }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code, pre { font-family: var(--mono); direction: ltr; unicode-bidi: isolate; }
+  :not(pre) > code { background: var(--bg-soft); border: 1px solid var(--border); padding: .08em .4em; border-radius: 6px; font-size: .88em; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+
+  /* header */
+  header.top { position: sticky; top: 0; z-index: 10; backdrop-filter: saturate(1.4) blur(10px); background: color-mix(in srgb, var(--bg) 82%, transparent); border-bottom: 1px solid var(--border); }
+  .nav { display: flex; align-items: center; gap: 20px; height: 62px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; color: var(--text); font-size: 1.1rem; }
+  .brand:hover { text-decoration: none; }
+  .brand small { font-weight: 500; color: var(--muted); font-size: .9rem; }
+  .nav .links { display: flex; gap: 18px; margin-inline-start: auto; align-items: center; }
+  .nav .links a { color: var(--muted); font-weight: 500; font-size: .95rem; }
+  .nav .links a:hover { color: var(--text); text-decoration: none; }
+  .btn-icon { background: none; border: 1px solid var(--border); color: var(--text); border-radius: 9px; height: 34px; min-width: 34px; padding: 0 10px; cursor: pointer; font: inherit; font-size: .88rem; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+  .btn-icon:hover { background: var(--bg-soft); }
+  @media (max-width: 760px) { .nav .links a.hide-sm { display: none; } .nav { gap: 10px; } .nav .links { gap: 10px; } .brand small { display: none; } }
+  @media (max-width: 480px) { .wrap { padding: 0 16px; } .install { max-width: 100%; } .install code { font-size: .85rem; } }
+
+  /* hero */
+  .hero { padding: 84px 0 56px; background:
+      radial-gradient(900px 380px at 85% -10%, var(--accent-soft), transparent 70%),
+      radial-gradient(700px 300px at -10% 10%, color-mix(in srgb, var(--accent-soft) 60%, transparent), transparent 70%); }
+  .hero-grid { display: grid; grid-template-columns: 1.05fr 1fr; gap: 48px; align-items: center; }
+  @media (max-width: 900px) { .hero-grid { grid-template-columns: 1fr; } }
+  .hero-grid > *, .online-offline > *, .step > div, .grid > * { min-width: 0; }
+  .eyebrow { display: inline-flex; gap: 8px; align-items: center; font-size: .82rem; font-weight: 600; color: var(--accent-strong); background: var(--accent-soft); border-radius: 999px; padding: 4px 12px; }
+  h1 { font-size: clamp(2.2rem, 4.6vw, 3.4rem); line-height: 1.1; letter-spacing: -.025em; margin: 18px 0 16px; font-weight: 800; }
+  html[lang="fa"] h1 { letter-spacing: 0; line-height: 1.35; }
+  h1 .accent { color: var(--accent); }
+  .lead { font-size: 1.15rem; color: var(--muted); max-width: 36em; margin: 0 0 28px; }
+  .cta { display: flex; gap: 12px; flex-wrap: wrap; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; border-radius: 10px; font-weight: 600; font-size: .98rem; border: 1px solid transparent; }
+  .btn:hover { text-decoration: none; }
+  .btn.primary { background: var(--accent); color: #fff; }
+  :root[data-theme="dark"] .btn.primary { color: #062421; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btn.primary { color: #062421; } }
+  .btn.primary:hover { background: var(--accent-strong); }
+  .btn.ghost { border-color: var(--border); color: var(--text); background: var(--surface); }
+  .btn.ghost:hover { background: var(--bg-soft); }
+  .install { margin-top: 22px; display: inline-flex; align-items: center; gap: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 8px 8px 8px 16px; box-shadow: var(--shadow); }
+  html[dir="rtl"] .install { padding: 8px 16px 8px 8px; }
+  .install code { background: none; border: 0; padding: 0; font-size: .95rem; }
+  .install .prompt { color: var(--muted); }
+  .copy { font: inherit; font-size: .8rem; font-weight: 600; border: 1px solid var(--border); background: var(--bg-soft); color: var(--text); border-radius: 7px; padding: 5px 10px; cursor: pointer; }
+
+  /* terminal */
+  .term { background: var(--code-bg); color: var(--code-text); border-radius: var(--radius); box-shadow: 0 20px 50px rgba(6, 30, 26, .28); overflow: hidden; border: 1px solid rgba(255,255,255,.06); direction: ltr; text-align: left; }
+  .term-bar { display: flex; gap: 7px; padding: 12px 14px; background: rgba(255,255,255,.04); border-bottom: 1px solid rgba(255,255,255,.06); }
+  .term-bar i { width: 11px; height: 11px; border-radius: 50%; background: #3a4a46; display: block; }
+  .term pre { margin: 0; padding: 18px 20px 22px; font-size: .84rem; line-height: 1.7; overflow-x: auto; white-space: pre; }
+  .term .c { color: var(--code-dim); }
+  .term .p { color: var(--code-accent); }
+  .term .ok { color: #86efac; }
+  .term .w { color: #fcd34d; }
+
+  /* sections */
+  section { padding: 76px 0; }
+  section.alt { background: var(--bg-soft); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .kicker { color: var(--accent); font-weight: 700; font-size: .85rem; text-transform: uppercase; letter-spacing: .08em; }
+  html[lang="fa"] .kicker { text-transform: none; letter-spacing: 0; }
+  h2 { font-size: clamp(1.7rem, 3vw, 2.3rem); letter-spacing: -.02em; margin: 8px 0 12px; line-height: 1.2; }
+  html[lang="fa"] h2 { letter-spacing: 0; line-height: 1.45; }
+  .sub { color: var(--muted); font-size: 1.07rem; max-width: 44em; margin: 0 0 40px; }
+
+  .grid { display: grid; gap: 18px; }
+  .g3 { grid-template-columns: repeat(3, 1fr); }
+  .g2 { grid-template-columns: repeat(2, 1fr); }
+  @media (max-width: 900px) { .g3 { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 620px) { .g3, .g2 { grid-template-columns: 1fr; } }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; box-shadow: var(--shadow); }
+  .card h3 { margin: 12px 0 6px; font-size: 1.06rem; }
+  .card p { margin: 0; color: var(--muted); font-size: .96rem; }
+  .ico { width: 40px; height: 40px; border-radius: 10px; background: var(--accent-soft); color: var(--accent-strong); display: grid; place-items: center; }
+  .ico svg { width: 21px; height: 21px; }
+
+  /* steps */
+  .steps { counter-reset: step; display: grid; gap: 16px; }
+  .step { display: grid; grid-template-columns: 44px 1fr; gap: 16px; align-items: start; }
+  .step::before { counter-increment: step; content: counter(step); width: 36px; height: 36px; border-radius: 50%; background: var(--accent); color: #fff; font-weight: 700; display: grid; place-items: center; }
+  html[lang="fa"] .step::before { content: counter(step, persian); }
+  .step h3 { margin: 4px 0 8px; font-size: 1.05rem; }
+  .step p { margin: 0 0 10px; color: var(--muted); }
+  .code { background: var(--code-bg); color: var(--code-text); border-radius: 10px; padding: 14px 16px; font-size: .85rem; overflow-x: auto; margin: 0; direction: ltr; text-align: left; }
+  .code .c { color: var(--code-dim); }
+  .online-offline { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+  @media (max-width: 900px) { .online-offline { grid-template-columns: 1fr; } }
+  .pill { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; font-size: .9rem; margin-bottom: 16px; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 0 4px color-mix(in srgb, #22c55e 22%, transparent); }
+  .dot.off { background: #f97316; box-shadow: 0 0 0 4px color-mix(in srgb, #f97316 22%, transparent); }
+
+  /* table */
+  .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow); }
+  table { border-collapse: collapse; width: 100%; font-size: .93rem; min-width: 720px; }
+  th, td { text-align: start; padding: 13px 16px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); background: var(--bg-soft); }
+  html[lang="fa"] th { text-transform: none; letter-spacing: 0; font-size: .85rem; }
+  tr:last-child td { border-bottom: 0; }
+  td strong { white-space: nowrap; }
+  html[dir="rtl"] td[dir="ltr"] { text-align: right; }
+  td code { font-size: .8em; }
+
+  /* share */
+  .share-card h3 { display: flex; align-items: center; gap: 10px; margin-top: 0; }
+
+  /* footer cta */
+  .final { text-align: center; }
+  .final .cta { justify-content: center; }
+  footer { border-top: 1px solid var(--border); padding: 30px 0; color: var(--muted); font-size: .9rem; }
+  footer .wrap { display: flex; flex-wrap: wrap; gap: 12px 24px; justify-content: space-between; }
+  footer a { color: var(--muted); }
+
+  [data-lang] { display: none; }
+  html[lang="en"] [data-lang="en"], html[lang="fa"] [data-lang="fa"] { display: revert; }
+  html[lang="en"] span[data-lang="en"], html[lang="fa"] span[data-lang="fa"] { display: inline; }
+</style>
+</head>
+<body>
+<script>
+  // Apply saved language and theme before first paint.
+  (function () {
+    try {
+      var lang = localStorage.getItem("anbar-lang");
+      if (!lang && (navigator.language || "").toLowerCase().indexOf("fa") === 0) lang = "fa";
+      if (lang === "fa") { document.documentElement.lang = "fa"; document.documentElement.dir = "rtl"; }
+      var theme = localStorage.getItem("anbar-theme");
+      if (theme) document.documentElement.dataset.theme = theme;
+    } catch (e) {}
+  })();
+</script>
+
+<header class="top">
+  <div class="wrap nav">
+    <a class="brand" href="#">
+      <svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="var(--accent)"/><path d="M7 14 16 8l9 6v10H7z" fill="none" stroke="#fff" stroke-width="2.4" stroke-linejoin="round"/><path d="M12 24v-6h8v6" fill="none" stroke="#fff" stroke-width="2.4"/></svg>
+      <span data-lang="en">Anbar <small>انبار</small></span>
+      <span data-lang="fa">انبار <small>Anbar</small></span>
+    </a>
+    <nav class="links">
+      <a class="hide-sm" href="#how"><span data-lang="en">How it works</span><span data-lang="fa">روش کار</span></a>
+      <a class="hide-sm" href="#ecosystems"><span data-lang="en">Ecosystems</span><span data-lang="fa">اکوسیستم‌ها</span></a>
+      <a class="hide-sm" href="#share"><span data-lang="en">Teams</span><span data-lang="fa">تیم‌ها</span></a>
+      <a href="https://github.com/assaabriiii/Anbar">GitHub</a>
+      <button class="btn-icon" id="lang-toggle" type="button" aria-label="Switch language"><span data-lang="en">فارسی</span><span data-lang="fa">English</span></button>
+      <button class="btn-icon" id="theme-toggle" type="button" aria-label="Toggle dark mode">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<main>
+<!-- HERO -->
+<div class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <span class="eyebrow">
+        <span data-lang="en">Open source · MIT · Python 3.10+</span>
+        <span data-lang="fa">متن‌باز · مجوز MIT · پایتون ۳٫۱۰ به بالا</span>
+      </span>
+      <h1 data-lang="en">Keep building when the <span class="accent">internet goes dark.</span></h1>
+      <h1 data-lang="fa">وقتی اینترنت قطع است، <span class="accent">کارتان متوقف نشود.</span></h1>
+      <p class="lead" data-lang="en">Anbar scans your project, downloads every dependency while the internet works, and serves it as local mirrors later. <code>pip</code>, <code>npm</code>, <code>docker</code> and Hugging Face keep working through shutdowns and filtering.</p>
+      <p class="lead" data-lang="fa">انبار پروژهٔ شما را بررسی می‌کند، تا وقتی اینترنت وصل است همهٔ وابستگی‌ها را دانلود می‌کند و بعداً آن‌ها را به شکل میرورهای محلی سرو می‌کند. <code>pip</code>، <code>npm</code>، <code>docker</code> و Hugging Face در قطعی و فیلترینگ هم کار می‌کنند.</p>
+      <div class="cta">
+        <a class="btn primary" href="#quickstart"><span data-lang="en">Get started</span><span data-lang="fa">شروع کنید</span></a>
+        <a class="btn ghost" href="https://github.com/assaabriiii/Anbar">
+          <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+          <span data-lang="en">Star on GitHub</span><span data-lang="fa">گیت‌هاب</span>
+        </a>
+      </div>
+      <div class="install">
+        <code><span class="prompt">$</span> pipx install anbar</code>
+        <button class="copy" data-copy="pipx install anbar"><span data-lang="en">Copy</span><span data-lang="fa">کپی</span></button>
+      </div>
+    </div>
+    <div class="term" aria-label="Example terminal session">
+      <div class="term-bar"><i></i><i></i><i></i></div>
+<pre><span class="c"># with internet</span>
+<span class="p">$</span> anbar scan
+  Python   1 manifest   4 items    10.2 MB
+  Node     1 manifest   5 items     1.1 MB
+  Docker   2 manifests  2 items  ≈ 286.1 MB
+<span class="p">$</span> anbar pack --out ~/kit
+<span class="ok">Done.</span> Kit size: 297.4 MB
+
+<span class="c"># internet gone</span>
+<span class="p">$</span> anbar serve ~/kit
+  PyPI index    http://127.0.0.1:3141/simple/
+  npm registry  http://127.0.0.1:4873/
+<span class="p">$</span> anbar use ~/kit
+<span class="p">$</span> pip install -r requirements.txt  <span class="ok">✓ offline</span>
+<span class="p">$</span> npm ci                           <span class="ok">✓ offline</span>
+<span class="p">$</span> anbar restore  <span class="c"># undo everything, byte for byte</span></pre>
+    </div>
+  </div>
+</div>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="wrap">
+    <div class="kicker"><span data-lang="en">Why Anbar</span><span data-lang="fa">چرا انبار</span></div>
+    <h2 data-lang="en">Built for shutdowns, filtering and slow links</h2>
+    <h2 data-lang="fa">ساخته‌شده برای قطعی، فیلترینگ و اینترنت کند</h2>
+    <p class="sub" data-lang="en"><em>Anbar</em> (انبار) means "storehouse" in Persian. When PyPI, npm, Docker Hub and Hugging Face are blocked for days, the kit you packed earlier still has everything your project needs.</p>
+    <p class="sub" data-lang="fa">«انبار» برای روزهایی ساخته شده که PyPI، npm، Docker Hub و Hugging Face در دسترس نیستند. کیتی که از قبل ساخته‌اید همهٔ نیازهای پروژه را در خود دارد.</p>
+    <div class="grid g3">
+      <div class="card">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></div>
+        <h3 data-lang="en">Finds everything</h3><h3 data-lang="fa">همه‌چیز را پیدا می‌کند</h3>
+        <p data-lang="en">Lock files, requirements, pyproject, Dockerfiles and compose files are detected on their own, including transitive dependencies and multi-stage base images.</p>
+        <p data-lang="fa">lock فایل‌ها، requirements، pyproject، Dockerfileها و فایل‌های compose خودکار پیدا می‌شوند؛ همراه با وابستگی‌های غیرمستقیم و ایمیج‌های بیلد چندمرحله‌ای.</p>
+      </div>
+      <div class="card">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></div>
+        <h3 data-lang="en">Incremental and resumable</h3><h3 data-lang="fa">افزایشی و ادامه‌پذیر</h3>
+        <p data-lang="en">Parallel downloads with retries continue where they stopped. Running <code>pack</code> again only fetches what changed.</p>
+        <p data-lang="fa">دانلودهای موازی با تکرار خودکار از همان‌جا که قطع شده‌اند ادامه پیدا می‌کنند. اجرای دوبارهٔ <code>pack</code> فقط موارد تازه را می‌گیرد.</p>
+      </div>
+      <div class="card">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg></div>
+        <h3 data-lang="en">Verified by default</h3><h3 data-lang="fa">همیشه بررسی‌شده</h3>
+        <p data-lang="en">Every file is checked against its sha256 or SRI hash. TLS verification can't be turned off, and no credentials are ever stored in a kit.</p>
+        <p data-lang="fa">هر فایل با هش sha256 یا SRI بررسی می‌شود. بررسی TLS خاموش‌شدنی نیست و هیچ رمز یا توکنی در کیت ذخیره نمی‌شود.</p>
+      </div>
+      <div class="card">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16"/><path d="M12 4v16"/><circle cx="12" cy="12" r="9"/></svg></div>
+        <h3 data-lang="en">Upstream mirrors</h3><h3 data-lang="fa">میرورهای بالادستی</h3>
+        <p data-lang="en">Download through local PyPI, npm, Docker Hub and Hugging Face mirrors, tried in order, or through an HTTP or SOCKS proxy.</p>
+        <p data-lang="fa">از میرورهای داخلی PyPI، npm، Docker Hub و Hugging Face (به ترتیب اولویت) یا از پراکسی HTTP و SOCKS دانلود کنید.</p>
+      </div>
+      <div class="card">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></svg></div>
+        <h3 data-lang="en">Reversible setup</h3><h3 data-lang="fa">تنظیمات برگشت‌پذیر</h3>
+        <p data-lang="en"><code>anbar use</code> backs up every config file it touches. <code>anbar restore</code> puts them all back exactly as they were.</p>
+        <p data-lang="fa"><code>anbar use</code> پیش از هر تغییر از فایل‌های تنظیمات پشتیبان می‌گیرد و <code>anbar restore</code> همه را دقیقاً به حالت قبل برمی‌گرداند.</p>
+      </div>
+      <div class="card">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></div>
+        <h3 data-lang="en">Cross-platform kits</h3><h3 data-lang="fa">کیت برای هر سیستم‌عامل</h3>
+        <p data-lang="en">Develop on Windows and deploy to Linux? Pack wheels for other platforms and Python versions, and images for other architectures.</p>
+        <p data-lang="fa">روی ویندوز توسعه می‌دهید و روی لینوکس دیپلوی می‌کنید؟ wheel برای پلتفرم‌ها و نسخه‌های دیگر پایتون و ایمیج برای معماری‌های دیگر بگیرید.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW -->
+<section id="how" class="alt">
+  <div class="wrap">
+    <div class="kicker"><span data-lang="en">How it works</span><span data-lang="fa">روش کار</span></div>
+    <h2 data-lang="en" id="quickstart">Five minutes, two moments</h2>
+    <h2 data-lang="fa">پنج دقیقه، در دو زمان</h2>
+    <p class="sub" data-lang="en">Pack while you're online, then serve and use the kit when you're not, on the same machine or another one.</p>
+    <p class="sub" data-lang="fa">وقتی آنلاین هستید کیت را بسازید؛ وقتی آفلاین شدید، روی همان سیستم یا سیستمی دیگر، آن را سرو و استفاده کنید.</p>
+    <div class="online-offline">
+      <div>
+        <div class="pill"><span class="dot"></span><span data-lang="en">With internet</span><span data-lang="fa">با اینترنت</span></div>
+        <div class="steps">
+          <div class="step"><div>
+            <h3 data-lang="en">Install Anbar</h3><h3 data-lang="fa">انبار را نصب کنید</h3>
+            <pre class="code">pipx install anbar</pre>
+          </div></div>
+          <div class="step"><div>
+            <h3 data-lang="en">See what your project needs</h3><h3 data-lang="fa">ببینید پروژه چه لازم دارد</h3>
+            <pre class="code">cd my-project
+anbar scan</pre>
+          </div></div>
+          <div class="step"><div>
+            <h3 data-lang="en">Pack the kit</h3><h3 data-lang="fa">کیت را بسازید</h3>
+            <pre class="code">anbar pack --out ~/anbar-kit
+anbar verify ~/anbar-kit   <span class="c"># optional</span></pre>
+          </div></div>
+        </div>
+      </div>
+      <div>
+        <div class="pill"><span class="dot off"></span><span data-lang="en">Without internet</span><span data-lang="fa">بدون اینترنت</span></div>
+        <div class="steps" style="counter-reset: step 3">
+          <div class="step"><div>
+            <h3 data-lang="en">Start the local mirrors</h3><h3 data-lang="fa">میرورهای محلی را روشن کنید</h3>
+            <pre class="code">anbar serve ~/anbar-kit</pre>
+          </div></div>
+          <div class="step"><div>
+            <h3 data-lang="en">Point your tools at them</h3><h3 data-lang="fa">ابزارها را به آن‌ها وصل کنید</h3>
+            <pre class="code">anbar use ~/anbar-kit
+pip install -r requirements.txt
+npm ci
+docker compose build</pre>
+          </div></div>
+          <div class="step"><div>
+            <h3 data-lang="en">Undo it all when you're back online</h3><h3 data-lang="fa">وقتی اینترنت برگشت، همه‌چیز را برگردانید</h3>
+            <pre class="code">anbar restore</pre>
+          </div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ECOSYSTEMS -->
+<section id="ecosystems">
+  <div class="wrap">
+    <div class="kicker"><span data-lang="en">Ecosystems</span><span data-lang="fa">اکوسیستم‌ها</span></div>
+    <h2 data-lang="en">One kit for your whole stack</h2>
+    <h2 data-lang="fa">یک کیت برای کل پروژه</h2>
+    <p class="sub" data-lang="en">Each ecosystem is a plugin. apt, Go modules and Maven are next, and contributions are welcome.</p>
+    <p class="sub" data-lang="fa">هر اکوسیستم یک پلاگین است. apt، Go modules و Maven بعدی‌ها هستند و از مشارکت شما استقبال می‌کنیم.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th><span data-lang="en">Ecosystem</span><span data-lang="fa">اکوسیستم</span></th>
+          <th><span data-lang="en">Detected from</span><span data-lang="fa">از کجا پیدا می‌شود</span></th>
+          <th><span data-lang="en">Served as</span><span data-lang="fa">چطور سرو می‌شود</span></th>
+          <th><span data-lang="en">Configured by <code>use</code></span><span data-lang="fa">تنظیم با <code>use</code></span></th>
+        </tr></thead>
+        <tbody>
+          <tr><td><strong>Python</strong></td><td dir="ltr"><code>requirements*.txt</code> <code>pyproject.toml</code> <code>poetry.lock</code> <code>Pipfile.lock</code> <code>uv.lock</code></td><td><span data-lang="en">PEP 503 index</span><span data-lang="fa">ایندکس PEP 503</span></td><td dir="ltr">pip, uv</td></tr>
+          <tr><td><strong>Node</strong></td><td dir="ltr"><code>package-lock.json</code> <code>yarn.lock</code> <code>pnpm-lock.yaml</code></td><td><span data-lang="en">read-only npm registry</span><span data-lang="fa">رجیستری فقط‌خواندنی npm</span></td><td dir="ltr">npm, yarn 1 &amp; 2+, pnpm</td></tr>
+          <tr><td><strong>Docker</strong></td><td dir="ltr"><code>Dockerfile</code> (multi-stage, <code>ARG</code>, <code>COPY --from</code>) · compose <code>image:</code></td><td><code>docker save</code> · <span data-lang="en">optional</span><span data-lang="fa">اختیاری</span> <code>registry:2</code></td><td dir="ltr"><code>docker load</code></td></tr>
+          <tr><td><strong>Models</strong></td><td dir="ltr"><code>anbar.toml</code>: Hugging Face repos, weight URLs</td><td><span data-lang="en">HF cache + file server</span><span data-lang="fa">کش HF و فایل‌سرور</span></td><td dir="ltr"><code>HF_HOME</code>, <code>HF_HUB_OFFLINE=1</code></td></tr>
+          <tr><td><strong>Docs</strong></td><td dir="ltr"><code>anbar.toml</code>: zip / tar archives</td><td><span data-lang="en">static sites</span><span data-lang="fa">سایت ایستا</span></td><td>–</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- SHARE -->
+<section id="share" class="alt">
+  <div class="wrap">
+    <div class="kicker"><span data-lang="en">For teams</span><span data-lang="fa">برای تیم‌ها</span></div>
+    <h2 data-lang="en">One person with internet can supply everyone</h2>
+    <h2 data-lang="fa">یک نفر با اینترنت، نیاز همهٔ تیم را تأمین می‌کند</h2>
+    <p class="sub" data-lang="en">A kit is an ordinary folder. Carry it on a USB drive, or serve it to the whole office over the LAN.</p>
+    <p class="sub" data-lang="fa">کیت یک پوشهٔ معمولی است. آن را روی فلش جابه‌جا کنید یا در شبکهٔ محلی برای کل دفتر سرو کنید.</p>
+    <div class="grid g2">
+      <div class="card share-card">
+        <h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2" width="10" height="7" rx="1"/><rect x="5" y="9" width="14" height="13" rx="2"/></svg>
+          <span data-lang="en">USB drive</span><span data-lang="fa">فلش</span></h3>
+        <pre class="code">anbar export team-kit --to /media/usb/team-kit.tar
+<span class="c"># on every other machine</span>
+anbar import /media/usb/team-kit.tar --to ~/team-kit</pre>
+        <p style="margin-top:12px" data-lang="en">The archive comes with a sha256 file, so a damaged copy is caught before you use it. Importing a newer export only adds new files.</p>
+        <p style="margin-top:12px" data-lang="fa">آرشیو یک فایل sha256 همراه دارد تا کپی خراب پیش از استفاده شناسایی شود. import یک خروجی جدیدتر فقط فایل‌های تازه را اضافه می‌کند.</p>
+      </div>
+      <div class="card share-card">
+        <h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="16" y="16" width="6" height="6" rx="1"/><path d="M12 8v4M5 16v-4h14v4"/></svg>
+          <span data-lang="en">Local network</span><span data-lang="fa">شبکهٔ محلی</span></h3>
+        <pre class="code">anbar serve ~/team-kit --host 0.0.0.0
+<span class="c"># on every teammate's machine</span>
+anbar use --host 192.168.1.10</pre>
+        <p style="margin-top:12px" data-lang="en">Teammates don't need a copy of the kit. Their pip, uv, npm, yarn and pnpm point straight at your machine.</p>
+        <p style="margin-top:12px" data-lang="fa">هم‌تیمی‌ها به نسخه‌ای از کیت نیاز ندارند؛ pip، uv، npm، yarn و pnpm آن‌ها مستقیم به سیستم شما وصل می‌شوند.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="final">
+  <div class="wrap">
+    <h2 data-lang="en">Pack your kit before you need it</h2>
+    <h2 data-lang="fa">کیت را پیش از آنکه لازمش داشته باشید بسازید</h2>
+    <p class="sub" style="margin-inline:auto" data-lang="en">Anbar installs offline too. Every release ships a single-file <code>.pyz</code> and a wheel bundle for Linux, macOS and Windows.</p>
+    <p class="sub" style="margin-inline:auto" data-lang="fa">خود انبار هم آفلاین نصب می‌شود. هر ریلیز یک فایل تکی <code>.pyz</code> و یک بستهٔ wheel برای لینوکس، مک و ویندوز دارد.</p>
+    <div class="cta">
+      <a class="btn primary" href="https://github.com/assaabriiii/Anbar#readme"><span data-lang="en">Read the docs</span><span data-lang="fa">مستندات</span></a>
+      <a class="btn ghost" href="https://github.com/assaabriiii/Anbar/releases"><span data-lang="en">Download a release</span><span data-lang="fa">دانلود ریلیز</span></a>
+      <a class="btn ghost" href="https://github.com/assaabriiii/Anbar/blob/main/CONTRIBUTING.md"><span data-lang="en">Contribute</span><span data-lang="fa">مشارکت کنید</span></a>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span data-lang="en">MIT License · © The Anbar contributors</span>
+    <span data-lang="fa">مجوز MIT · © مشارکت‌کنندگان انبار</span>
+    <span>
+      <a href="https://github.com/assaabriiii/Anbar">GitHub</a> ·
+      <a href="https://github.com/assaabriiii/Anbar/blob/main/README.fa.md">README (فارسی)</a> ·
+      <a href="https://github.com/assaabriiii/Anbar/issues"><span data-lang="en">Issues</span><span data-lang="fa">گزارش مشکل</span></a> ·
+      <a href="https://github.com/assaabriiii/Anbar/blob/main/SECURITY.md"><span data-lang="en">Security</span><span data-lang="fa">امنیت</span></a>
+    </span>
+  </div>
+</footer>
+
+<script>
+  (function () {
+    var root = document.documentElement;
+    function save(key, value) { try { localStorage.setItem(key, value); } catch (e) {} }
+    document.getElementById("lang-toggle").addEventListener("click", function () {
+      var fa = root.lang !== "fa";
+      root.lang = fa ? "fa" : "en";
+      root.dir = fa ? "rtl" : "ltr";
+      save("anbar-lang", root.lang);
+    });
+    document.getElementById("theme-toggle").addEventListener("click", function () {
+      var dark = root.dataset.theme
+        ? root.dataset.theme === "dark"
+        : window.matchMedia("(prefers-color-scheme: dark)").matches;
+      root.dataset.theme = dark ? "light" : "dark";
+      save("anbar-theme", root.dataset.theme);
+    });
+    document.querySelectorAll("[data-copy]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        var text = button.getAttribute("data-copy");
+        var done = function () {
+          var old = button.innerHTML;
+          button.textContent = root.lang === "fa" ? "کپی شد" : "Copied";
+          setTimeout(function () { button.innerHTML = old; }, 1400);
+        };
+        if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, function () {});
+      });
+    });
+  })();
+</script>
+</body>
+</html>
