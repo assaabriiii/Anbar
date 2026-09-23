@@ -30,6 +30,7 @@ class _Handler(http.server.BaseHTTPRequestHandler):
             if rng:
                 start = int(rng.split("=")[1].split("-")[0])
                 self.send_response(206)
+                self.send_header("Content-Range", f"bytes {start}-{len(PAYLOAD) - 1}/{len(PAYLOAD)}")
             else:
                 self.send_response(200)
             body = PAYLOAD[start:]
@@ -112,3 +113,9 @@ def test_run_parallel_collects_errors():
     by_item = {i: (r, e) for i, r, e in results}
     assert by_item[1][0] == 10 and by_item[3][0] == 30
     assert isinstance(by_item[2][1], ValueError)
+
+
+def test_content_length_via_range(server):
+    net = fast_net()
+    assert net.content_length(f"{server}/file") == len(PAYLOAD)
+    assert net.content_length(f"{server}/missing") is None

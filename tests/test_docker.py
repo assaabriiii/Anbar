@@ -183,8 +183,9 @@ def test_unreachable_docker_hub(tmp_path, monkeypatch):
 @pytest.mark.docker
 @pytest.mark.network
 def test_real_docker_roundtrip(tmp_path):
-    proc = subprocess.run(["docker", "version"], capture_output=True)
-    if proc.returncode != 0:
+    import shutil
+
+    if shutil.which("docker") is None or subprocess.run(["docker", "version"], capture_output=True).returncode:
         pytest.skip("Docker daemon not available")
     project = tmp_path / "p"
     project.mkdir()

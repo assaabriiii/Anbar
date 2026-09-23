@@ -189,10 +189,22 @@ class Network:
         return json.loads(self.get_bytes(url, {"Accept": "application/json", **(headers or {})}))
 
     def content_length(self, url: str) -> int | None:
+        """Size of a remote file, or None if unknown. Downloads at most one byte."""
         try:
             with self.open(url, method="HEAD") as resp:
                 value = resp.headers.get("Content-Length")
-                return int(value) if value else None
+                if value:
+                    return int(value)
+        except (urllib.error.URLError, OSError, ValueError):
+            pass
+        try:
+            # Some CDNs omit Content-Length on HEAD; a one-byte range request reveals the total.
+            with self.open(url, headers={"Range": "bytes=0-0"}) as resp:
+                total = (resp.headers.get("Content-Range") or "").rpartition("/")[2]
+                if total.isdigit():
+                    return int(total)
+                value = resp.headers.get("Content-Length")
+                return int(value) if value and getattr(resp, "status", 200) == 200 else None
         except (urllib.error.URLError, OSError, ValueError):
             return None
 

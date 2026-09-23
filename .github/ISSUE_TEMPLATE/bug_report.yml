@@ -1,0 +1,40 @@
+name: Bug report
+description: Something doesn't work as expected
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. English or Persian are both fine.
+        Please remove tokens, passwords and private hostnames from logs before posting.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: The command you ran, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Full output
+      render: text
+  - type: textarea
+    id: network
+    attributes:
+      label: Network situation
+      description: Which registries / mirrors were reachable? Any proxy? (e.g. "PyPI blocked, runflare mirror OK")
+  - type: input
+    id: version
+    attributes:
+      label: Anbar version
+      description: Output of `anbar --version`
+    validations:
+      required: true
+  - type: input
+    id: platform
+    attributes:
+      label: OS and Python version
+      placeholder: Ubuntu 24.04, Python 3.12
+    validations:
+      required: true

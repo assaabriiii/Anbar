@@ -1,0 +1,88 @@
+# anbar.toml — optional project configuration for Anbar.
+# Copy this file to your project root as `anbar.toml` and delete what you don't need.
+# Every section is optional.
+
+# Only handle these ecosystems (default: all of them).
+# ecosystems = ["python", "node", "docker", "models", "docs"]
+
+[python]
+# Extra packages that are not in any manifest (PEP 508 strings).
+extra = ["gunicorn==23.0.0", "ipython"]
+# Never download these.
+exclude = []
+# Also keep pip, setuptools and wheel so sdists can be built offline.
+include_build_tools = true
+# Only download wheels, never source distributions.
+only_binary = false
+# Download for other machines too (e.g. you develop on Windows, deploy on Linux).
+# Every platform is combined with every Python version.
+platforms = ["manylinux2014_x86_64", "win_amd64"]
+python_versions = ["3.11", "3.12"]
+# ...or list exact targets:
+# [[python.targets]]
+# platform = "macosx_12_0_arm64"
+# python_version = "3.12"
+
+[node]
+# Extra packages as name@version or name@dist-tag.
+extra = ["typescript@5.6.3"]
+
+[docker]
+# Extra images that are not in a Dockerfile or compose file.
+extra = ["redis:7.4-alpine"]
+exclude = []
+# Pull images for this platform instead of the native one.
+# platform = "linux/amd64"
+# Values for ARGs used in FROM lines (e.g. FROM python:${PYTHON_VERSION}).
+build_args = { PYTHON_VERSION = "3.12" }
+# Put registry:2 in the kit and run it on `anbar serve` for docker pull over the LAN.
+registry = false
+
+# Hugging Face repositories (needs `pipx inject anbar huggingface_hub`).
+[[models.huggingface]]
+repo = "sentence-transformers/all-MiniLM-L6-v2"
+# revision = "main"
+# repo_type = "model"   # or "dataset" / "space"
+# allow_patterns = ["*.json", "*.safetensors", "*.txt"]
+# ignore_patterns = ["*.onnx"]
+
+# Any file on the web, e.g. YOLO or OpenVINO weights. sha256 is optional but recommended.
+[[models.urls]]
+url = "https://github.com/ultralytics/assets/releases/download/v8.2.0/yolov8n.pt"
+name = "yolo"
+# sha256 = "..."
+
+# Offline documentation archives (zip or tar), served as static sites.
+[[docs]]
+name = "python"
+url = "https://docs.python.org/3/archives/python-3.12.7-docs-html.zip"
+
+# Upstream mirrors used by `anbar pack`, tried in order. The public registries
+# are only used if you list them, so keep them last as a fallback.
+[mirrors]
+pypi = ["https://mirror-pypi.runflare.com/simple", "https://pypi.org/simple"]
+npm = ["https://mirror-npm.runflare.com"]
+# Plain entries mirror Docker Hub; use "registry=mirror" for others.
+docker = ["docker.arvancloud.ir", "ghcr.io=ghcr.mirror.example"]
+huggingface = ["https://hf-mirror.com"]
+
+[proxy]
+# Used by pack only. Credentials: set ANBAR_PROXY_USER / ANBAR_PROXY_PASSWORD
+# in the environment instead of writing them here.
+# http = "http://127.0.0.1:8080"
+# https = "http://127.0.0.1:8080"
+# socks = "socks5h://127.0.0.1:1080"   # needs `pipx inject anbar PySocks`
+# no_proxy = ["localhost", "127.0.0.1", ".local"]
+
+[serve]
+host = "127.0.0.1"      # "0.0.0.0" shares the mirrors with your LAN
+pypi_port = 3141
+npm_port = 4873
+files_port = 8765
+registry_port = 5000
+
+[network]
+workers = 8             # parallel downloads
+retries = 4
+timeout = 60            # seconds
+# ca_bundle = "/path/to/corporate-ca.pem"   # TLS verification can't be turned off

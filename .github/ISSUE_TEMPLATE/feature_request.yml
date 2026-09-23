@@ -1,0 +1,21 @@
+name: Feature request / new ecosystem
+description: Suggest an improvement or support for another package manager
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: For a new ecosystem, list the manifest / lock files and how its tools can be pointed at a local mirror.
+  - type: checkboxes
+    id: help
+    attributes:
+      label: Contribution
+      options:
+        - label: I'd like to work on this myself

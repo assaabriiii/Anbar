@@ -107,3 +107,11 @@ def test_missing_explicit_config(tmp_path):
 def test_docs_require_name_and_url():
     with pytest.raises(ConfigError):
         parse_config({"docs": [{"url": "https://x"}]})
+
+
+def test_example_config_parses(capsys):
+    root = Path(__file__).resolve().parent.parent
+    cfg = load_config(root, root / "anbar.example.toml")
+    assert cfg.mirrors.pypi[-1] == "https://pypi.org/simple"
+    assert len(cfg.python.targets) == 4
+    assert "unknown key" not in capsys.readouterr().err
